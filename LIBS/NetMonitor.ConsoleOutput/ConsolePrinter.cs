@@ -7,7 +7,6 @@ namespace NetMonitor.ConsoleOutput
 	{
 		public static void PrintShortSpeedTestResult(SpeedResult result)
 		{
-			Console.WriteLine();
 			if (result.Error != null)
 			{
 				Console.WriteLine("[{0}]SpeedTest: Test failed! Reason: {1}", result.TimeStamp, result.Error);
