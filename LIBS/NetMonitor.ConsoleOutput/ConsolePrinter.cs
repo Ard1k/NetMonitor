@@ -5,6 +5,17 @@ namespace NetMonitor.ConsoleOutput
 {
 	public static class ConsolePrinter
 	{
+		public static void PrintShortSpeedTestResult(SpeedResult result)
+		{
+			Console.WriteLine();
+			if (result.Error != null)
+			{
+				Console.WriteLine("[{0}]SpeedTest: Test failed! Reason: {1}", result.TimeStamp, result.Error);
+				return;
+			}
+			Console.WriteLine("[{0}]SpeedTest: Speed - {1}Mbit/s Filesize - {2}MB Dwnload duration: {3}", result.TimeStamp, result.SpeedResultMbit.ToString("N5"), result.ResultFileSizeInMB.ToString("N2"), result.ElapsedTime);
+		}
+
 		public static void PrintSpeedTestResult(SpeedResult result)
 		{
 			Console.WriteLine();
@@ -42,6 +53,11 @@ namespace NetMonitor.ConsoleOutput
 			Console.WriteLine("  Success rate: {0:N2}%", ((double)result.TestSuccessfulCount / result.TestTotalCount) * 100);
 			Console.WriteLine();
 			Console.WriteLine("Average ping: {0:N2} ms", result.AveragePing);
+		}
+
+		public static void PrintShortAgregatedPingTestResult(PingAgregatedResult result)
+		{
+			Console.WriteLine("[{0}]Ping({1}): Average time - {5:N2}ms Success rate - {2}/{3}({4:N2}%)", result.TimeStamp, result.PingedTarget, result.TestSuccessfulCount, result.TestTotalCount, ((double)result.TestSuccessfulCount / result.TestTotalCount) * 100, result.AveragePing);
 		}
 	}
 }

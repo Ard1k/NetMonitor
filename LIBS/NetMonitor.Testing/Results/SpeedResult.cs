@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace NetMonitor.Testing.Results
 {
@@ -12,5 +9,6 @@ namespace NetMonitor.Testing.Results
 		public TimeSpan ElapsedTime { get; set; }
 		public double SpeedResultMbit { get; set; }
 		public double ResultFileSizeInMB { get; set; }
+		public string Error { get; set; }
 	}
 }

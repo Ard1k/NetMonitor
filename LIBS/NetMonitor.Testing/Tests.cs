@@ -1,7 +1,7 @@
 ﻿using NetMonitor.Testing.Results;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Configuration;
 using System.Net.NetworkInformation;
 
 namespace NetMonitor.Testing
@@ -10,33 +10,49 @@ namespace NetMonitor.Testing
 	{
 		public static SpeedResult DownloadSpeedTest()
 		{
-			const string tempfile = "tempfile.tmp";
-			const string testurl = "http://de.testmy.net/dl-19.0MB";
-
-			File.Delete(tempfile);
+			string testurl = ConfigurationManager.AppSettings["speedTarget"];
 
 			System.Net.WebClient webClient = new System.Net.WebClient() { CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore) };
 
 			DateTime testStart = DateTime.Now;
-			System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+			byte[] byteFile = new byte[0];
 
-			webClient.DownloadFile(testurl, tempfile);
+			try
+			{
+				sw.Start();
+				byteFile = webClient.DownloadData(testurl);
+				sw.Stop();
+			}
+			catch (Exception ex)
+			{
+				return new SpeedResult
+				{
+					ElapsedTime = TimeSpan.MinValue,
+					ResultFileSizeInMB = 0,
+					SpeedResultMbit = 0,
+					TestedFileURL = testurl,
+					TimeStamp = testStart,
+					Error = ex.Message
+				};
+			}
 
-			sw.Stop();
+			double speed = 0;
 
-			FileInfo fileInfo = new FileInfo(tempfile);
-
-			double speed = (fileInfo.Length / sw.Elapsed.TotalMilliseconds); //bajtu za milisekundu
-			speed = speed * 1000; //bajtu za sekundu
-			speed = speed * 8; // bitu za sekundu
-			speed = speed / 1000000; // Mbit/s
+			if (sw.ElapsedMilliseconds >= 0)
+			{
+				speed = (byteFile.Length / (sw.Elapsed.TotalMilliseconds)); //bajtu za milisekundu
+				speed = speed * 1000; //bajtu za sekundu
+				speed = speed * 8; // bitu za sekundu
+				speed = (speed / 1024) / 1024; // Mbit/s
+			}
 
 			return new SpeedResult
 			{
 				TimeStamp = testStart,
 				TestedFileURL = testurl,
 				ElapsedTime = sw.Elapsed,
-				ResultFileSizeInMB = (double)fileInfo.Length / 1000000,
+				ResultFileSizeInMB = ((double)byteFile.Length / 1024) / 1024,
 				SpeedResultMbit = speed
 			};
 		}
@@ -44,7 +60,7 @@ namespace NetMonitor.Testing
 		public static PingResult PingTest(string target)
 		{
 			Ping pinger = new Ping();
-			var result = new PingResult { IsSuccess = false, PingedTarget = target, TimeStamp = DateTime.Now};
+			var result = new PingResult { IsSuccess = false, PingedTarget = target, TimeStamp = DateTime.Now };
 
 			try
 			{

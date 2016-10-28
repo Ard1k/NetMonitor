@@ -1,44 +1,65 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using NetMonitor.SimpleLogger;
 using NetMonitor.Testing;
-using NetMonitor.SimpleLogger;
-using System.Threading;
+using System;
+using System.Configuration;
 using System.Diagnostics;
+using System.Threading;
 
 namespace NetMonitor
 {
-	class Program
-	{
-		public static Thread pingThread;
-		public string exitString;
+	internal delegate void PrintDel(string s);
 
-		static void Main(string[] args)
+	public delegate void Terminator();
+
+	internal class Program
+	{
+		public static PrintDel print = delegate (string s) { Console.WriteLine(s); };
+		public static Terminator terminatePing = delegate () { pingThread.Abort(); AppStatus.UpdateAppStatus(); };
+		public static Terminator terminateSpeed = delegate () { speedThread.Abort(); AppStatus.UpdateAppStatus(); };
+		public static Thread pingThread;
+		public static Thread speedThread;
+
+		private static void Main(string[] args)
 		{
-						
-			pingThread = new Thread(PingTargets);
+			Console.Title = "NetMonitor";
+
+			pingThread = new Thread(Pinger);
 			pingThread.IsBackground = true;
 
-			Console.WriteLine("Running background PingTest...");
-			pingThread.Start();
+			speedThread = new Thread(SpeedTester);
+			speedThread.IsBackground = true;
 
-			
-			
+			string temp;
+
+			temp = ConfigurationManager.AppSettings["autostartPing"].ToLower();
+			if (temp == "t" || temp == "true") pingThread.Start();
+
+			temp = ConfigurationManager.AppSettings["autostartSpeed"].ToLower();
+			if (temp == "t" || temp == "true") speedThread.Start();
+
 			while (true)
 			{
-				var exitString = Console.ReadLine();
-				if (exitString == "exit") Environment.Exit(0);
-				Thread.Sleep(500);
+				ConsoleControls.WaitForInput();
+				AppStatus.UpdateAppStatus();
 			}
 		}
 
-		public static void PingTargets()
+		public static void Pinger()
 		{
-			Console.WriteLine("Ping thread running!");
+			print.Invoke("Ping thread started!");
+			var targets = ConfigurationManager.AppSettings["pingTargets"].Split('|');
+			int pingFreq = 0;
 
-			var targets = new List<string> { "www.cz", "8.8.8.8", "88.208.111.251", "192.168.1.1" };
-			var logger = new Logging("log/testlog.txt");
+			try
+			{
+				pingFreq = Convert.ToInt32(ConfigurationManager.AppSettings["pingFreq"]);
+			}
+			catch
+			{
+				print.Invoke("Invalid ping frequency, stopping ping thread!");
+				terminatePing.Invoke();
+			}
+
 			var sw = new Stopwatch();
 
 			while (true)
@@ -48,20 +69,52 @@ namespace NetMonitor
 
 				foreach (var t in targets)
 				{
-
 					var it = Tests.PingAgregatedTest(t, 200);
-					ConsoleOutput.ConsolePrinter.PrintAgregatedPingTestResult(it);
-					logger.LogAgregatedPing(it);
+					ConsoleOutput.ConsolePrinter.PrintShortAgregatedPingTestResult(it);
+					Logging.Instance.LogAgregatedPing(it);
 				}
 
 				sw.Stop();
 
-				if (sw.ElapsedMilliseconds < 60000)
+				if (sw.ElapsedMilliseconds < pingFreq)
 				{
-					Thread.Sleep(60000 - (int)sw.ElapsedMilliseconds);
+					Thread.Sleep(pingFreq - (int)sw.ElapsedMilliseconds);
 				}
 			}
+		}
 
+		public static void SpeedTester()
+		{
+			print.Invoke("SpeedTest thread running!");
+
+			var sw = new Stopwatch();
+			int speedFreq = 0;
+
+			try
+			{
+				speedFreq = Convert.ToInt32(ConfigurationManager.AppSettings["speedFreq"]);
+			}
+			catch
+			{
+				print.Invoke("Invalid SpeedTest frequency, stopping SpeedTest thread!");
+				terminateSpeed.Invoke();
+			}
+
+			while (true)
+			{
+				sw.Reset();
+				sw.Start();
+
+				var it = Tests.DownloadSpeedTest();
+				ConsoleOutput.ConsolePrinter.PrintShortSpeedTestResult(it);
+
+				sw.Stop();
+
+				if (sw.ElapsedMilliseconds < speedFreq)
+				{
+					Thread.Sleep(speedFreq - (int)sw.ElapsedMilliseconds);
+				}
+			}
 		}
 	}
 }
