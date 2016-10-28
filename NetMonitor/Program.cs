@@ -107,6 +107,7 @@ namespace NetMonitor
 
 				var it = Tests.DownloadSpeedTest();
 				ConsoleOutput.ConsolePrinter.PrintShortSpeedTestResult(it);
+				Logging.Instance.LogSpeedTest(it);
 
 				sw.Stop();
 
