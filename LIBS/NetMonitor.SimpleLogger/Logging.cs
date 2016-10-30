@@ -40,9 +40,11 @@ namespace NetMonitor.SimpleLogger
 
 			var sb = new StringBuilder();
 
+			sb.Append(result.TimeStamp.ToString("dd.MM.yyyy HH:mm:ss"));
+			sb.Append("\t");
 			sb.Append(result.TimeStamp.ToString("dd.MM.yyyy"));
 			sb.Append("\t");
-			sb.Append(result.TimeStamp.ToString("hh:mm:ss"));
+			sb.Append(result.TimeStamp.ToString("HH:mm:ss"));
 			sb.Append("\t");
 			sb.Append(result.PingedTarget);
 			sb.Append("\t");
@@ -66,9 +68,11 @@ namespace NetMonitor.SimpleLogger
 
 			var sb = new StringBuilder();
 
+			sb.Append(result.TimeStamp.ToString("dd.MM.yyyy HH:mm:ss"));
+			sb.Append("\t");
 			sb.Append(result.TimeStamp.ToString("dd.MM.yyyy"));
 			sb.Append("\t");
-			sb.Append(result.TimeStamp.ToString("hh:mm:ss"));
+			sb.Append(result.TimeStamp.ToString("HH:mm:ss"));
 			sb.Append("\t");
 			sb.Append(result.TestedFileURL);
 			sb.Append("\t");
